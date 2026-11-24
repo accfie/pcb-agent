@@ -58,6 +58,11 @@ python scripts/verify_sch.py out/arduino_min_system_netlist.json out/arduino_min
 
 # 4. 看一眼成品
 kicad-cli sch export pdf --output out/board.pdf out/arduino_min_system.kicad_sch
+
+# 5. 一句话改设计，重新生成（双击 一键改参数.bat 也可以）
+python scripts/revise.py "把 C1 和 C2 换成 18pF"
+python scripts/revise.py "把 R2 换成 470"
+python scripts/revise.py "删除 C5"
 ```
 
 第 3 步通过（`全部一致`）就等于证明了：**KiCad 认定的连接关系和你给的 JSON 完全相同**。
@@ -96,6 +101,7 @@ python scripts/mvp.py --mock
 ```
 pcb-agent/
 ├── 一键运行.bat             # 双击运行完整流水线（无需命令行）
+├── 一键改参数.bat           # 双击做第 5 步：一句话改设计
 ├── 一键上传.bat             # 双击提交到 GitHub（无需命令行）
 ├── deliverables/            # 交付物：设计报告、原理图 PDF/KiCad、BOM
 ├── src/
@@ -107,7 +113,8 @@ pcb-agent/
 │   ├── mvp.py               # 一句话需求 -> BOM -> 连接关系 JSON
 │   ├── check_netlist.py     # 连接关系 JSON 结构校验
 │   ├── netlist_to_sch.py    # 连接关系 JSON -> KiCad 原理图
-│   └── verify_sch.py        # 原理图对账（反导网表逐网络比对）
+│   ├── verify_sch.py        # 原理图对账（反导网表逐网络比对）
+│   └── revise.py            # 第 5 步：一句话改设计并重新生成
 ├── docs/
 │   ├── zero-to-week1.md     # 零基础完全手册（GitHub / 电路常识 / KiCad 手把手）
 │   ├── week1-checklist.md   # 第一周任务清单与验收标准
