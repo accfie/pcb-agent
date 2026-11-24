@@ -1,0 +1,28 @@
+# ===== 密钥与本地配置，绝不能提交 =====
+.env
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ===== 运行产物 =====
+out/*
+!out/.gitkeep
+
+# ===== KiCad 临时文件（工程文件本身要提交）=====
+*.kicad_prl
+*-backups/
+fp-info-cache
+_autosave-*
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

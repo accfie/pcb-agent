@@ -1,0 +1,7 @@
+# 第一周只需要前两个能装上就够了，其余是 W2 开始要用的。
+python-dotenv>=1.0.0
+requests>=2.31.0
+openai>=1.30.0
+
+# 生成 / 解析 .kicad_sch 时可能会用到（W5–W6 再说，先注释着）
+# kicad-skip>=0.2.0

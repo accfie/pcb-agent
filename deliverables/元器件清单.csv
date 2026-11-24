@@ -1,0 +1,14 @@
+﻿ref,value,footprint,quantity,purpose
+U1,ATmega328P-PU,Package_DIP:DIP-28_W7.62mm,1,主控 MCU，DIP-28 直插封装
+Y1,16MHz,Crystal:Crystal_HC49-4H_Vertical,1,MCU 主时钟晶振（并联谐振 16MHz）
+C1,22pF,Capacitor_SMD:C_0603_1608Metric,1,晶振负载电容，接 XTAL1
+C2,22pF,Capacitor_SMD:C_0603_1608Metric,1,晶振负载电容，接 XTAL2
+C3,100nF,Capacitor_SMD:C_0603_1608Metric,1,VCC 引脚高频去耦
+C4,100nF,Capacitor_SMD:C_0603_1608Metric,1,AVCC 引脚高频去耦
+C5,10uF,Capacitor_SMD:CP_Elec_5x5.4,1,电源入口储能滤波，抑制上电跌落
+R1,10k,Resistor_SMD:R_0603_1608Metric,1,RESET 上拉电阻，保证上电可靠复位
+R2,330,Resistor_SMD:R_0603_1608Metric,1,LED 限流电阻（5V 下约 10mA）
+D1,LED_Green,LED_SMD:LED_0805_2012Metric,1,电源/心跳指示灯
+SW1,SW_PUSH,Button_Switch_THT:SW_PUSH_6mm,1,复位按键，按下将 RESET 拉低
+J1,ISP_2x3,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,1,ICSP 接口，用于烧写 Bootloader / 程序
+J2,PWR_2x3,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,1,电源输入与 VCC/GND 对外引出

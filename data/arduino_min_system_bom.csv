@@ -1,0 +1,14 @@
+﻿ref,value,footprint,quantity,note
+U1,ATmega328P-PU,Package_DIP:DIP-28_W7.62mm,1,主控 MCU（DIP-28 直插）
+Y1,16MHz 无源晶振,Crystal:Crystal_HC49-4H_Vertical,1,系统时钟源
+C1,22pF,Capacitor_SMD:C_0603_1608Metric,1,晶振负载电容（接 XTAL1）
+C2,22pF,Capacitor_SMD:C_0603_1608Metric,1,晶振负载电容（接 XTAL2）
+R1,10kΩ,Resistor_SMD:R_0603_1608Metric,1,复位引脚上拉到 VCC
+SW1,轻触开关 6x6,Button_Switch_THT:SW_PUSH_6mm,1,手动复位
+C3,100nF,Capacitor_SMD:C_0603_1608Metric,1,VCC 去耦
+C4,100nF,Capacitor_SMD:C_0603_1608Metric,1,AVCC 去耦
+C5,10uF,Capacitor_SMD:CP_Elec_5x5.4,1,电源滤波
+D1,LED 绿色,LED_SMD:LED_0805_2012Metric,1,电源指示
+R2,330Ω,Resistor_SMD:R_0603_1608Metric,1,LED 限流
+J1,2x3 排针 2.54mm,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,1,ISP 下载口
+J2,2x3 排针 2.54mm,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,1,电源输入（5V/GND）
