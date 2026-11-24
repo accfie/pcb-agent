@@ -75,13 +75,28 @@ def chat_json(system: str, user: str, max_retries: int = 2) -> dict:
     ]
 
     last_err = ""
+    use_json_mode = True
     for attempt in range(max_retries + 1):
-        resp = client.chat.completions.create(
-            model=settings.llm_model(),
-            messages=messages,
-            temperature=0,
-            response_format={"type": "json_object"},
-        )
+        try:
+            kwargs = dict(
+                model=settings.llm_model(),
+                messages=messages,
+                temperature=0,
+            )
+            if use_json_mode:
+                kwargs["response_format"] = {"type": "json_object"}
+            resp = client.chat.completions.create(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            msg = str(exc)
+            # 有些本地模型服务不支持 response_format，降级再试一次
+            if use_json_mode and ("response_format" in msg or "not support" in msg.lower()):
+                use_json_mode = False
+                continue
+            raise LLMError(
+                "调用模型失败：%s\n       检查 .env 里的 LLM_BASE_URL / LLM_MODEL / LLM_API_KEY 是否正确。"
+                % msg[:300]
+            ) from exc
+
         content = resp.choices[0].message.content or ""
         try:
             return _extract_json(content)

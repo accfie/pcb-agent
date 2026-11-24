@@ -47,10 +47,46 @@ NET_SYSTEM = """你是资深硬件工程师，要把 BOM 展开成引脚级连�
  ]}
 规则：
 - pins 的键必须是引脚**编号**（字符串），值是该脚的功能名
+- **每个引脚必须且只能属于一个网络**，绝不允许同一个引脚出现在两个网络里
 - 每个网络至少连 2 个引脚；单独一端的引脚不要建网络
 - 必须有 VCC 和 GND 两个网络
 - 网络名用大写英文：VCC / GND / RESET / XTAL1 / XTAL2 / 自定义信号名
-- 不要编造 BOM 里不存在的位号"""
+- 不要编造 BOM 里不存在的位号
+- symbol 字段必须是 KiCad 官方库里的真实名字（库名:符号名），不要写芯片型号
+- 如果某个器件带了 available_pins 字段，只能使用其中列出的引脚编号"""
+
+
+def enrich_bom_with_pins(bom: dict) -> dict:
+    """把每个器件在 KiCad 库里的真实引脚清单补进 BOM。
+
+    模型最常见的错误是瞎编引脚号（或把同一引脚塞进两个网络）。
+    直接把可用引脚摊在它面前，错误率会低很多。
+    """
+    try:
+        from src import sch_writer as sw
+
+        lib = sw.library()
+    except Exception:  # noqa: BLE001
+        return bom
+
+    enriched = json.loads(json.dumps(bom))
+    for comp in enriched.get("components", []):
+        sid = str(comp.get("symbol", "")).strip()
+        if not sid:
+            continue
+        if not lib.block(sid):
+            better = lib.suggest(sid)
+            if not better:
+                continue
+            sid = better
+            comp["symbol"] = better
+        pins = lib.pins(sid)
+        if pins:
+            names = []
+            for num in sorted(pins, key=lambda x: int(x) if x.isdigit() else 999):
+                names.append(num)
+            comp["available_pins"] = names
+    return enriched
 
 
 def mock_bom() -> dict:
@@ -82,35 +118,49 @@ def step_netlist(bom: dict, mock: bool) -> dict:
         print("[2/3] 生成连接关系 …… mock 模式，读取本地样例")
         return llm.load_mock_netlist()
     print("[2/3] 生成连接关系 …… 调用模型")
-    return llm.chat_json(NET_SYSTEM, "BOM 如下：\n%s" % json.dumps(bom, ensure_ascii=False))
+    payload = enrich_bom_with_pins(bom)
+    return llm.chat_json(
+        NET_SYSTEM, "BOM 如下：\n%s" % json.dumps(payload, ensure_ascii=False)
+    )
 
 
-def step_validate(netlist: dict, bom: dict, mock: bool, requirement: str) -> dict:
-    """校验；不合法就把错误回喂给模型重生成一次（反馈闭环）。"""
+def step_validate(netlist: dict, bom: dict, mock: bool, requirement: str, rounds: int = 3) -> dict:
+    """校验；不合法就把错误回喂给模型重生成，最多 rounds 轮（反馈闭环）。"""
     errors, warnings = netlist_check.validate(netlist)
     if not errors:
         return {"netlist": netlist, "errors": [], "warnings": warnings}
 
-    print("      校验失败 %d 项，回喂给模型重试一次" % len(errors))
-    for e in errors[:5]:
-        print("        - %s" % e)
     if mock:
         return {"netlist": netlist, "errors": errors, "warnings": warnings}
 
-    retry = llm.chat_json(
-        NET_SYSTEM,
-        "原需求：%s\nBOM：%s\n\n你上一版输出有这些错误，请修正后重新输出完整 JSON：\n%s"
-        % (
-            requirement,
-            json.dumps(bom, ensure_ascii=False),
-            "\n".join("- " + e for e in errors),
-        ),
-    )
-    errors2, warnings2 = netlist_check.validate(retry)
-    if not errors2:
-        print("      重试成功")
-        return {"netlist": retry, "errors": [], "warnings": warnings2}
-    return {"netlist": retry, "errors": errors2, "warnings": warnings2}
+    best = netlist
+    for attempt in range(1, rounds + 1):
+        print("      第 %d 轮重试：%d 项错误，回喂给模型" % (attempt, len(errors)))
+        for e in errors[:5]:
+            print("        - %s" % e)
+        try:
+            retry = llm.chat_json(
+                NET_SYSTEM,
+                "原需求：%s\nBOM：%s\n\n你上一版输出有这些错误，请修正后重新输出完整 JSON：\n%s"
+                % (
+                    requirement,
+                    json.dumps(bom, ensure_ascii=False),
+                    "\n".join("- " + e for e in errors),
+                ),
+            )
+        except llm.LLMError as exc:
+            print("      重试调用失败：%s" % exc)
+            break
+
+        errors2, warnings2 = netlist_check.validate(retry)
+        if len(errors2) < len(errors):
+            best = retry
+        if not errors2:
+            print("      第 %d 轮修正成功" % attempt)
+            return {"netlist": retry, "errors": [], "warnings": warnings2}
+        errors, warnings = errors2, warnings2
+
+    return {"netlist": best, "errors": errors, "warnings": warnings}
 
 
 def write_outputs(out_dir: Path, requirement: str, bom: dict, result: dict) -> dict:

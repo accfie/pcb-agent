@@ -3,13 +3,16 @@ chcp 65001 >nul
 set PYTHONIOENCODING=utf-8
 cd /d "%~dp0"
 
+set PY=python
+if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
+
 echo.
 echo ============================================================
 echo   AI Agent PCB Board  -  offline pipeline
 echo ============================================================
 echo.
 
-python scripts\offline_run.py
+%PY% scripts\offline_run.py
 
 echo.
 echo ============================================================
